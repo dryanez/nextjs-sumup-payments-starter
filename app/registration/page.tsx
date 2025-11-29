@@ -38,12 +38,13 @@ export default function Registration() {
   const [currentStep, setCurrentStep] = useState<RegistrationStep>("selection")
   const [selectedTicket, setSelectedTicket] = useState<TicketType | null>(null)
   const [orderId, setOrderId] = useState<string | null>(null)
+  const [checkoutData, setCheckoutData] = useState<any>(null)
 
   const handleTicketSelection = (ticket: TicketType) => {
-  // Create a SumUp-compatible checkout on the server using the ticket price.
-  // SumUp expects amounts as decimal strings like "5.00".
-  setSelectedTicket(ticket);
-    (async () => {
+    // Create a SumUp-compatible checkout on the server using the ticket price.
+    // SumUp expects amounts as decimal strings like "5.00".
+    setSelectedTicket(ticket)
+    ;(async () => {
       try {
         const amount = ticket.price.toFixed(2)
         // Try the common endpoints used in this project. Adjust if your API differs.
@@ -62,11 +63,15 @@ export default function Registration() {
           })
           if (alt.ok) {
             const data = await alt.json()
+            setCheckoutData(data)
             const redirect = data.checkoutUrl || data.checkout_url || data.redirect_url || data.url
             // Only navigate to external URLs (SumUp). If the API returned a local redirect
             // (for example `/thanks`) we should open the local checkout UI instead.
-            if (redirect && /^(https?:)?\/\//.test(redirect)) window.location.href = redirect
-            else setCurrentStep('checkout')
+            if (redirect && /^(https?:)?\/\//.test(redirect)) {
+              window.location.href = redirect
+            } else {
+              setCurrentStep('checkout')
+            }
             return
           }
           setCurrentStep('checkout')
@@ -74,6 +79,7 @@ export default function Registration() {
         }
 
         const data = await res.json()
+        setCheckoutData(data)
         const redirect = data.checkoutUrl || data.checkout_url || data.redirect_url || data.url
         // Only navigate to external URLs. Some APIs return a local redirect/return URL
         // which would accidentally navigate to a success page immediately.
@@ -190,6 +196,7 @@ export default function Registration() {
               selectedTicket={selectedTicket}
               onBack={handleBackToSelection}
               onSuccess={handleCheckoutSuccess}
+              checkoutData={checkoutData}
             />
           )}
 

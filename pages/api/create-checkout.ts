@@ -50,21 +50,29 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       ? `https://${process.env.VERCEL_URL}`
       : 'http://localhost:3000';
 
-  const response = await api.checkouts.createCheckout({
+    // Build payload: prefer merchant_code but fall back to pay_to_email (merchant email)
+    const payload: any = {
+      checkout_reference: `checkout-ref-${Math.random()}`,
+      // Use `/payment/success` as the return/redirect path so it matches the
+      // production redirect URI registered with SumUp (e.g. https://ismit2026.com/payment/success).
+      return_url: `${baseHost}/payment/success`,
+      redirect_url: `${baseHost}/payment/success`,
+      // allow overriding the amount and currency via the request body
+      amount: bodyAmount || configs.donation_amount,
+      payment_type,
+      currency: bodyCurrency || configs.currency,
+    };
+
+    if (configs.merchant_code) {
+      payload.merchant_code = configs.merchant_code;
+    } else if (configs.merchant_email) {
+      // SumUp accepts either merchant_code or pay_to_email (merchant email)
+      payload.pay_to_email = configs.merchant_email;
+    }
+
+    const response = await api.checkouts.createCheckout({
       access_token: token.access_token,
-      payload: {
-        checkout_reference: `checkout-ref-${Math.random()}`,
-        merchant_code: configs.merchant_code,
-  // Use `/payment/success` as the return/redirect path so it matches the
-  // production redirect URI registered with SumUp (e.g.
-  // https://ismit2026.com/payment/success).
-  return_url: `${baseHost}/payment/success`,
-  redirect_url: `${baseHost}/payment/success`,
-    // allow overriding the amount and currency via the request body
-    amount: bodyAmount || configs.donation_amount,
-    payment_type,
-    currency: bodyCurrency || configs.currency,
-      },
+      payload,
     });
 
     // If the SumUp response includes a redirect_url that points to an external
