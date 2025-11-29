@@ -15,6 +15,17 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
   const { payment_type, amount: bodyAmount, currency: bodyCurrency, mock } = req.body || {};
 
+  // Log incoming request shape for debugging client 400s (avoid logging secrets)
+  try {
+    console.info('create-checkout: incoming request', {
+      method: req.method,
+      headers: Object.keys(req.headers),
+      bodyKeys: req.body ? Object.keys(req.body) : null,
+    });
+  } catch (e) {
+    // ignore logging errors
+  }
+
   // Basic request validation: SumUp needs an amount and currency
   if (!bodyAmount || !bodyCurrency) {
     res.status(400).json({ error: 'Missing required fields: amount and currency are required in the request body.' });
