@@ -185,18 +185,22 @@ export default function Registration() {
                   year.
                 </p>
                 <button
-                  onClick={async () => {
-                    const response = await fetch('/api/payments/create-test', {
-                      method: 'POST',
-                    });
-                    const data = await response.json();
-                    if (data.checkoutUrl) {
-                      window.location.href = data.checkoutUrl;
-                    }
+                  onClick={() => {
+                    // Create a €1 test ticket and trigger the checkout flow
+                    const testTicket: TicketType = {
+                      id: 'euro-test',
+                      name: '€1 Euro Test',
+                      description: 'Test payment of €1',
+                      price: 1.00,
+                      currency: 'EUR',
+                      available: true,
+                      deadline: '2026-12-31',
+                    };
+                    handleTicketSelection(testTicket);
                   }}
-                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4"
+                  className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg mt-4 text-lg shadow-lg transition-all"
                 >
-                  Test $1 Checkout
+                  🧪 Test €1 Euro Payment
                 </button>
               </div>
               <TicketSelection onSelectTicket={handleTicketSelection} />
