@@ -91,13 +91,15 @@ export default function Registration() {
         const data = await res.json()
         setCheckoutData(data)
         const redirect = data.checkoutUrl || data.checkout_url || data.redirect_url || data.url
-        // Only navigate to external URLs. Some APIs return a local redirect/return URL
-        // which would accidentally navigate to a success page immediately.
+        // Only navigate to external SumUp-hosted checkout URLs.
+        // Do NOT redirect to our own domain (ismit2026.com) — that would skip the payment widget.
         if (redirect && /^(https?:)?\/\//.test(redirect)) {
           try {
             const url = new URL(redirect.startsWith('//') ? `https:${redirect}` : redirect)
-            // only redirect if the host is not localhost (i.e., external SumUp domain)
-            if (!/localhost|127\.0\.0\.1/.test(url.hostname)) {
+            // Only redirect if the host is an actual SumUp domain, not our own site
+            const isOwnDomain = /ismit2026\.com|localhost|127\.0\.0\.1/.test(url.hostname)
+            const isSumUpDomain = /sumup\.(com|io)|checkout\.sumup/.test(url.hostname)
+            if (!isOwnDomain && isSumUpDomain) {
               window.location.href = redirect
               return
             }
@@ -105,7 +107,7 @@ export default function Registration() {
             // if URL parsing fails, avoid redirecting and fall back to local checkout
           }
         }
-        // if API returns checkout id only or local redirect or we chose not to redirect, proceed to the checkout step
+        // Proceed to the checkout step where the SumUp widget will mount using checkoutData.id
         setCurrentStep('checkout')
       } catch (err) {
         // network or server error — fall back to the local checkout UI
