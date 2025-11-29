@@ -6,7 +6,20 @@ import configs from '../../modules/sumup/configs';
 const api = apiInit({ apiUrl: configs.api_url });
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
-  const { payment_type, amount: bodyAmount, currency: bodyCurrency, mock } = req.body;
+  // validate HTTP method
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    res.status(405).json({ error: 'Method Not Allowed. Use POST.' });
+    return;
+  }
+
+  const { payment_type, amount: bodyAmount, currency: bodyCurrency, mock } = req.body || {};
+
+  // Basic request validation: SumUp needs an amount and currency
+  if (!bodyAmount || !bodyCurrency) {
+    res.status(400).json({ error: 'Missing required fields: amount and currency are required in the request body.' });
+    return;
+  }
   const previewMock = process.env.NEXT_PUBLIC_PREVIEW_MOCK === '1' || req.query.mock === '1' || mock === true;
 
   // If preview/mock mode is active, return a fake external checkout URL so the
