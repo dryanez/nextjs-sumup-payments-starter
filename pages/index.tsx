@@ -1,40 +1,16 @@
-import { NextPage } from 'next';
-import Link from 'next/link';
+import { useEffect } from 'react';
+import { useRouter } from 'next/router';
 
-import { Meta } from '../components/Meta';
-import { Logo } from '../components/Logo';
-import { Main } from '../components/Main';
-import { DonationCard } from '../components/DonationCard';
+export default function Home() {
+  const router = useRouter();
 
-import fetchSettings from '../modules/app-fetch-settings';
+  useEffect(() => {
+    router.replace('/registration');
+  }, [router]);
 
-const title = 'Buy me a coffee by SumUp OP';
-
-const Page: NextPage<DonationDetails> = ({
-  merchantPublicKey,
-  donationAmount,
-}) => (
-  <>
-    <Meta title={title} path="/" />
-    <Main>
-      <Logo />
-      <DonationCard
-        merchantPublicKey={merchantPublicKey}
-        donationAmount={donationAmount}
-      />
-      <Link href="https://github.com/cristianoliveira/nextjs-sumup-payments-starter">
-        See how it works
-      </Link>
-    </Main>
-  </>
-);
-
-export async function getStaticProps(): Promise<{ props: DonationDetails }> {
-  const donationDetails = await fetchSettings();
-
-  return {
-    props: donationDetails,
-  };
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <p>Redirecting to registration...</p>
+    </div>
+  );
 }
-
-export default Page;

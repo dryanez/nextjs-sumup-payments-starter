@@ -1,80 +1,37 @@
 import { NextPage } from 'next';
-import Head from 'next/head';
 import Link from 'next/link';
-import { css } from '@emotion/react';
-import styled from '@emotion/styled';
-import {
-  Card,
-  Headline,
-  Body,
-  ButtonGroup,
-  spacing,
-  cx,
-  center,
-} from '@sumup/circuit-ui';
+import Head from 'next/head';
 
-import { Logo } from '../components/Logo';
-
-interface ErrorPageProps {
+interface ErrorProps {
   statusCode?: number;
 }
 
-const Container = styled('section')(
-  ({ theme }) => css`
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    max-width: 450px;
-    margin: 0 auto ${theme.spacings.kilo};
-  `,
-);
+const Error: NextPage<ErrorProps> = ({ statusCode }) => {
+  return (
+    <>
+      <Head>
+        <title>Error {statusCode || ''}</title>
+      </Head>
+      <div className="min-h-screen flex flex-col items-center justify-center p-4">
+        <h1 className="text-4xl font-bold mb-4">
+          {statusCode ? `Error ${statusCode}` : 'An error occurred'}
+        </h1>
+        <p className="text-gray-600 mb-8">
+          {statusCode === 404
+            ? 'The page you requested could not be found.'
+            : 'Something went wrong. Please try again.'}
+        </p>
+        <Link href="/registration" className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg">
+          Go to Registration
+        </Link>
+      </div>
+    </>
+  );
+};
 
-const title = 'An error occurred';
-
-const ErrorPage: NextPage<ErrorPageProps> = ({ statusCode }) => (
-  <>
-    <Head>
-      <title>{title}</title>
-    </Head>
-    <Container>
-      <a href="https://sumup.com" target="_blank" rel="noopener noreferrer">
-        <Logo />
-      </a>
-      <Card>
-        <Headline
-          as="h1"
-          size="one"
-          css={cx(center, spacing({ bottom: 'giga' }))}
-        >
-          {title}
-        </Headline>
-        <Body css={spacing({ bottom: 'giga' })}>
-          {statusCode
-            ? `An error ${statusCode} occurred while loading the page.`
-            : 'An error occurred while rendering the page.'}
-        </Body>
-        <ButtonGroup
-          actions={{
-            primary: {
-              href: '/',
-              children: 'Go to the homepage',
-              as: Link,
-            },
-            secondary: {
-              onClick: () => window.location.reload(),
-              children: 'Reload the page',
-            },
-          }}
-        />
-      </Card>
-    </Container>
-  </>
-);
-
-ErrorPage.getInitialProps = ({ res, err }) => {
-  const statusCode = res?.statusCode || err?.statusCode;
+Error.getInitialProps = ({ res, err }) => {
+  const statusCode = res ? res.statusCode : err ? err.statusCode : 404;
   return { statusCode };
 };
 
-export default ErrorPage;
+export default Error;
