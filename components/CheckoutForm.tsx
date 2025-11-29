@@ -3,17 +3,19 @@ import usePaymentWidget from '../hooks/use-payment-widget'
 
 export const CheckoutForm = ({ selectedTicket, onBack, onSuccess, checkoutData }: any) => {
   const [SumUpCard, isLoading] = usePaymentWidget() as unknown as [any, boolean]
-  const containerRef = useRef<HTMLDivElement | null>(null)
   const [widgetMounted, setWidgetMounted] = useState(false)
   const [widgetError, setWidgetError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!SumUpCard || !checkoutData?.id || !containerRef.current) return
+    if (!SumUpCard || !checkoutData?.id) return
     
     console.log('Mounting SumUp widget with checkoutId:', checkoutData.id)
     
     try {
-      const widget = SumUpCard.mount({
+      // SumUp Card SDK v2 API: SumUpCard.mount() takes an options object
+      // See: https://developer.sumup.com/docs/online-payments/card-widget/
+      SumUpCard.mount({
+        id: 'sumup-card-container',
         checkoutId: checkoutData.id,
         onResponse: (type: string, body: any) => {
           console.log('SumUp widget response:', type, body)
@@ -28,20 +30,6 @@ export const CheckoutForm = ({ selectedTicket, onBack, onSuccess, checkoutData }
           setWidgetMounted(true)
         },
       })
-      
-      // Mount to the container
-      if (containerRef.current) {
-        containerRef.current.innerHTML = ''
-        containerRef.current.appendChild(widget)
-      }
-      
-      return () => {
-        try {
-          widget?.unmount?.()
-        } catch (e) {
-          // ignore unmount errors
-        }
-      }
     } catch (e: any) {
       console.error('Failed to mount SumUp widget', e)
       setWidgetError(e?.message || 'Failed to load payment widget')
@@ -56,8 +44,8 @@ export const CheckoutForm = ({ selectedTicket, onBack, onSuccess, checkoutData }
         <p className="text-2xl font-bold text-[#FE6448]">€{selectedTicket?.price?.toFixed(2)}</p>
       </div>
       
-      {/* SumUp widget container */}
-      <div ref={containerRef} id="sumup-card" className="min-h-[200px] mb-4">
+      {/* SumUp widget container - the SDK will render into this div */}
+      <div id="sumup-card-container" className="min-h-[200px] mb-4">
         {isLoading && (
           <div className="flex items-center justify-center h-[200px]">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0D1858]"></div>
