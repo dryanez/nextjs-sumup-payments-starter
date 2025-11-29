@@ -15,7 +15,8 @@ function PaymentWidget({
   onError: OnEventHandler;
 }) {
   const [isReady, setIsReady] = useState(false);
-  const [paymentWidget] = usePaymentWidget();
+  // usePaymentWidget returns [widget | null, loading:boolean]
+  const [paymentWidget] = usePaymentWidget() as unknown as [any, boolean];
 
   useEffect(() => {
     if (!paymentWidget) {
@@ -71,7 +72,7 @@ function PaymentWidget({
         <div css={cx(center, spacing({ top: 'giga', bottom: 'giga' }))}>
           <Spinner
             css={(theme: any) => css`
-              color: ${theme.colors.p500};
+              color: ${theme.colors?.p500};
             `}
           />
         </div>

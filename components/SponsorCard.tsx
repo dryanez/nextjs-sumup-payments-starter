@@ -16,13 +16,15 @@ import {
 
 import SubscriptionWidget from '../components/SubscriptionWidget';
 
+type ErrorState = { message: string } | null;
+
 export const SponsorCard: React.FC<DonationDetails> = ({
   donationAmount,
 }) => {
   const router = useRouter();
   const onSuccess = () => router.push('/thanks');
 
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<ErrorState>(null);
 
   return (
     <Card>

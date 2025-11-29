@@ -22,18 +22,20 @@ const apiInit = function({ apiUrl }) {
         grant_type,
         scope,
       }) => {
+        // OAuth2 token endpoints typically expect form-urlencoded bodies.
+        const params = new URLSearchParams();
+        params.append('client_id', client_id);
+        params.append('client_secret', client_secret);
+        params.append('grant_type', grant_type);
+        if (scope) params.append('scope', scope);
+
         return axios
           .post<AccessToken>(
             `${apiUrl}/token`,
-            {
-              client_id,
-              grant_type,
-              client_secret,
-              scope,
-            },
+            params.toString(),
             {
               headers: {
-                'Content-Type': 'application/json;charset=UTF-8'
+                'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
               },
             },
           )

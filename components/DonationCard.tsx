@@ -17,6 +17,8 @@ import {
 import SwiftCheckout from '../components/SwiftCheckout';
 import PaymentWidget from '../components/PaymentWidget';
 
+type ErrorState = { message: string } | null;
+
 export const DonationCard: React.FC<DonationDetails> = ({
   merchantPublicKey,
   donationAmount,
@@ -24,7 +26,7 @@ export const DonationCard: React.FC<DonationDetails> = ({
   const router = useRouter();
   const onSuccess = () => router.push('/thanks');
 
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<ErrorState>(null);
 
   return (
     <Card>

@@ -1,3 +1,5 @@
+"use client"
+
 import type { AppProps } from 'next/app';
 import { ThemeProvider } from '@emotion/react';
 import { BaseStyles } from '@sumup/circuit-ui';

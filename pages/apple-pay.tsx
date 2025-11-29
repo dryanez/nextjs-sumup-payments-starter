@@ -33,7 +33,7 @@ const applePaymentRequest = {
 const ApplePaySession = global.ApplePaySession as any;
 
 const Page: NextPage = () => {
-  const [checkout, setCheckout] = useState(null);
+  const [checkout, setCheckout] = useState<{ id: string; amount?: string } | null>(null);
   useEffect(() => {
     if (typeof ApplePaySession === 'undefined') {
       return;
@@ -55,7 +55,7 @@ const Page: NextPage = () => {
             {'SumUp online payments'}
           </Headline>
 
-          {checkout && (
+          {checkout && checkout.id && (
             <button onClick={() => {
                 // applePaymentRequest.total.amount = `${checkout.amount}`;
 

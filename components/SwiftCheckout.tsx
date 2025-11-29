@@ -15,10 +15,13 @@ function SwiftCheckout({
   onSuccess: OnEventHandler;
   onError: OnEventHandler;
 } & DonationDetails) {
-  const paymentContainerRef = useRef(null);
+  const paymentContainerRef = useRef<HTMLDivElement | null>(null);
   const [issuePaymentRequest, setIssuePaymentRequest] = useState('');
 
-  const [sumUpClient] = useSwiftCheckout(merchantPublicKey);
+  const [sumUpClient] =
+    (merchantPublicKey
+      ? (useSwiftCheckout(merchantPublicKey) as unknown as [any])
+      : [null]);
 
   useEffect(() => {
     if (!sumUpClient || !paymentContainerRef.current) {
@@ -72,7 +75,7 @@ function SwiftCheckout({
     const paymentElement = sumUpClient
       .elements()
       .onSubmit(async (paymentEvent: unknown) => {
-        try {
+  try {
           const paymentResponse = await paymentRequest.show(paymentEvent);
 
           const checkout = await apiClient.createCheckout({
@@ -92,8 +95,14 @@ function SwiftCheckout({
                 'Failed payment attempt. Try again with a different card.',
             });
           }
-        } catch (e) {
-          onError(e);
+        } catch (e: unknown) {
+          // Ensure onError receives an object with message
+          if (typeof e === 'object' && e !== null && 'message' in e) {
+            const msg = String((e as any).message ?? JSON.stringify(e));
+            onError({ message: msg });
+          } else {
+            onError({ message: String(e) });
+          }
         }
       });
 

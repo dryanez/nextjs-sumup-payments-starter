@@ -6,7 +6,24 @@ import configs from '../../modules/sumup/configs';
 const api = apiInit({ apiUrl: configs.api_url });
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
-  const { payment_type } = req.body;
+  const { payment_type, amount: bodyAmount, currency: bodyCurrency, mock } = req.body;
+  const previewMock = process.env.NEXT_PUBLIC_PREVIEW_MOCK === '1' || req.query.mock === '1' || mock === true;
+
+  // If preview/mock mode is active, return a fake external checkout URL so the
+  // frontend can redirect to it for testing without contacting SumUp.
+  if (previewMock) {
+    const fake = {
+      amount: Number(bodyAmount || configs.donation_amount || '1.00'),
+      checkout_reference: `mock-checkout-${Math.random()}`,
+      id: `mock-${Date.now()}`,
+      redirect_url: 'https://checkout.sumup.mock/checkout/abcdef123456',
+      return_url: 'https://ismit2026.com/payment/success',
+      status: 'PENDING',
+    };
+    res.status(200).json(fake);
+    return;
+  }
+
   const { client_id, client_secret } = configs;
   const token = await api.auth
     .fetchAccessToken({
@@ -25,20 +42,48 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   try {
-    const response = await api.checkouts.createCheckout({
+    // Prefer an explicit BASE_HOST (including protocol) for production deployments.
+    // Fallback to VERCEL_URL (older pattern) or localhost for local dev.
+    const baseHost = process.env.BASE_HOST
+      ? process.env.BASE_HOST.replace(/\/$/, '')
+      : process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : 'http://localhost:3000';
+
+  const response = await api.checkouts.createCheckout({
       access_token: token.access_token,
       payload: {
         checkout_reference: `checkout-ref-${Math.random()}`,
         merchant_code: configs.merchant_code,
-        return_url: `https://${process.env.VERCEL_URL}/thanks`,
-        redirect_url: `https://${process.env.VERCEL_URL}/thanks`,
-        amount: configs.donation_amount,
-        payment_type,
-        currency: configs.currency,
+  // Use `/payment/success` as the return/redirect path so it matches the
+  // production redirect URI registered with SumUp (e.g.
+  // https://ismit2026.com/payment/success).
+  return_url: `${baseHost}/payment/success`,
+  redirect_url: `${baseHost}/payment/success`,
+    // allow overriding the amount and currency via the request body
+    amount: bodyAmount || configs.donation_amount,
+    payment_type,
+    currency: bodyCurrency || configs.currency,
       },
     });
 
-    res.status(200).json(response);
+    // If the SumUp response includes a redirect_url that points to an external
+    // SumUp-hosted checkout, expose it as `checkoutUrl` so the client can
+    // redirect reliably.
+    const redirect = (response as any).redirect_url || (response as any).url || (response as any).checkout_url;
+    let checkoutUrl = undefined;
+    try {
+      if (redirect && /^(https?:)?\/\//.test(redirect)) {
+        const u = new URL(redirect.startsWith('//') ? `https:${redirect}` : redirect);
+        if (!/localhost|127\.0\.0\.1/.test(u.hostname)) {
+          checkoutUrl = redirect;
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    res.status(200).json({ ...response, ...(checkoutUrl ? { checkoutUrl } : {}) });
   } catch (err) {
     res.status(err.code || 500).json({ ...err });
   }

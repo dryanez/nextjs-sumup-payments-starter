@@ -15,7 +15,7 @@ function SubscriptionWidget({
   onError: OnEventHandler;
 }) {
   const [isReady, setIsReady] = useState(false);
-  const [paymentWidget] = usePaymentWidget();
+  const [paymentWidget] = usePaymentWidget() as unknown as [any, boolean];
 
   useEffect(() => {
     if (!paymentWidget) {
@@ -69,7 +69,7 @@ function SubscriptionWidget({
         <div css={cx(center, spacing({ top: 'giga', bottom: 'giga' }))}>
           <Spinner
             css={(theme: any) => css`
-              color: ${theme.colors.p500};
+              color: ${theme.colors?.p500};
             `}
           />
         </div>
