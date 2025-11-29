@@ -55,6 +55,16 @@ export default function Registration() {
         })
 
         if (!res.ok) {
+          // try to read structured JSON error from the server to help debugging
+          try {
+            const errJson = await res.json();
+            console.error('create-checkout error', errJson);
+            alert(`Checkout failed: ${errJson.error || JSON.stringify(errJson)}`);
+          } catch (e) {
+            console.error('create-checkout error (non-JSON)', res.status);
+            alert(`Checkout failed (status ${res.status})`);
+          }
+
           // fallback to older path used in some branches
           const alt = await fetch('/api/payments/create-test', {
             method: 'POST',

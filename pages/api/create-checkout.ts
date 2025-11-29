@@ -25,19 +25,25 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   const { client_id, client_secret } = configs;
-  const token = await api.auth
-    .fetchAccessToken({
+  let token = null as any;
+  try {
+    token = await api.auth.fetchAccessToken({
       client_id,
       client_secret,
       grant_type: 'client_credentials',
       scope: 'payments',
-    })
-    .catch((err) => {
-      res.status(err.code || 500).json({ ...err });
-      return null;
+    });
+  } catch (err: any) {
+    // Log full error server-side for debugging (do not leak secrets)
+    console.error('create-checkout: token fetch failed', {
+      message: err?.message,
+      status: err?.response?.status,
+      data: err?.response?.data,
     });
 
-  if (!token) {
+    const status = err?.response?.status || 500;
+    const message = err?.response?.data?.error_description || err?.response?.data?.error || err?.message || 'Failed to fetch access token';
+    res.status(status).json({ error: message });
     return;
   }
 
@@ -70,15 +76,30 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       payload.pay_to_email = configs.merchant_email;
     }
 
-    const response = await api.checkouts.createCheckout({
-      access_token: token.access_token,
-      payload,
-    });
+    let response: any = null;
+    try {
+      response = await api.checkouts.createCheckout({
+        access_token: token.access_token,
+        payload,
+      });
+    } catch (err: any) {
+      console.error('create-checkout: createCheckout failed', {
+        message: err?.message,
+        status: err?.response?.status,
+        data: err?.response?.data,
+        payload,
+      });
+
+      const status = err?.response?.status || 500;
+      const message = err?.response?.data?.message || err?.response?.data || err?.message || 'Failed to create checkout';
+      res.status(status).json({ error: message });
+      return;
+    }
 
     // If the SumUp response includes a redirect_url that points to an external
     // SumUp-hosted checkout, expose it as `checkoutUrl` so the client can
     // redirect reliably.
-    const redirect = (response as any).redirect_url || (response as any).url || (response as any).checkout_url;
+    const redirect = response?.redirect_url || response?.url || response?.checkout_url;
     let checkoutUrl = undefined;
     try {
       if (redirect && /^(https?:)?\/\//.test(redirect)) {
@@ -88,11 +109,13 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         }
       }
     } catch (e) {
-      // ignore
+      // ignore malformed redirect
+      console.warn('create-checkout: invalid redirect URL on response', { redirect });
     }
 
     res.status(200).json({ ...response, ...(checkoutUrl ? { checkoutUrl } : {}) });
   } catch (err) {
-    res.status(err.code || 500).json({ ...err });
+    console.error('create-checkout: unexpected error', err);
+    res.status(500).json({ error: 'Unexpected server error' });
   }
 };
