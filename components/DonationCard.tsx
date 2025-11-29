@@ -54,7 +54,7 @@ export const DonationCard: React.FC<DonationDetails> = ({
 
         <Body css={cx(center)}>-- OR --</Body>
 
-        <PaymentWidget onSuccess={onSuccess} onError={setError} />
+        <PaymentWidget onSuccess={onSuccess} onError={setError} donationAmount={donationAmount} />
       </div>
 
       {error && (

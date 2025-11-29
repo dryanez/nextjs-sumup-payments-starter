@@ -41,6 +41,8 @@ const Page: NextPage = () => {
 
     apiClient.createCheckout({
       paymentType: 'apple-pay',
+      amount: '5.00',
+      currency: 'EUR',
     }).then(setCheckout);
 
   }, []);

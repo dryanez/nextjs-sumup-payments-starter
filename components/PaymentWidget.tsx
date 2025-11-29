@@ -10,9 +10,13 @@ type OnEventHandler = (event: { message: string }) => void;
 function PaymentWidget({
   onSuccess,
   onError,
+  donationAmount = '5.00',
+  currency = 'EUR',
 }: {
   onSuccess: OnEventHandler;
   onError: OnEventHandler;
+  donationAmount?: string;
+  currency?: string;
 }) {
   const [isReady, setIsReady] = useState(false);
   // usePaymentWidget returns [widget | null, loading:boolean]
@@ -26,6 +30,8 @@ function PaymentWidget({
     apiClient
       .createCheckout({
         paymentType: '',
+        amount: donationAmount,
+        currency: currency,
       })
       .then((checkout: { id: string }) => {
         paymentWidget.mount({

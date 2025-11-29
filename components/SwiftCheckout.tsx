@@ -80,6 +80,8 @@ function SwiftCheckout({
 
           const checkout = await apiClient.createCheckout({
             paymentType: paymentResponse.details.paymentMethod,
+            amount: donationAmount,
+            currency: 'EUR',
           });
 
           const processResult = await sumUpClient.processCheckout(
