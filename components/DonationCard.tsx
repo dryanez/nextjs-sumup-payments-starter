@@ -42,17 +42,19 @@ export const DonationCard: React.FC<DonationDetails> = ({
 
       <div>
         <Body css={cx(center, spacing({ bottom: 'giga' }))}>
-          SumUp Swift Checkout ®
+          Pay with Card
         </Body>
 
+        {/* SwiftCheckout (Google Pay / Apple Pay) disabled for now - requires additional setup */}
+        {/* 
         <SwiftCheckout
           merchantPublicKey={merchantPublicKey}
           donationAmount={donationAmount}
           onSuccess={onSuccess}
           onError={setError}
         />
-
         <Body css={cx(center)}>-- OR --</Body>
+        */}
 
         <PaymentWidget onSuccess={onSuccess} onError={setError} donationAmount={donationAmount} />
       </div>
